@@ -58,42 +58,6 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
     login = sleep_and_find(browser, 'loginButton', By.ID)
     if login:
         login.click()
-        # usermanagment = sleep_and_find(
-        #     browser, '/html/body/div[2]/aside/section/ul/li[2]/a', By.XPATH)
-        # if usermanagment:
-        #     usermanagment.click()
-        #     agent_Data = sleep_and_find(
-        #         browser, '//*[@id="t_agentList"]/tr[9]/td[2]/a', By.XPATH)
-        #     if agent_Data:
-        #         agent_Data.click()
-        #         shoesize = WebDriverWait(browser, 60).until(
-        #             EC.element_to_be_clickable((By.XPATH, '//*[@id="d_tip_2"]/a[1]')))
-        #         time.sleep(10)
-        #         shoesize.click()
-        #         ok_Button = sleep_and_find(browser, 'Button_OK', By.ID)
-        #         if ok_Button:
-        #             ok_Button.click()
-        #             user = WebDriverWait(browser, 60).until(
-        #                 EC.element_to_be_clickable((By.XPATH, '//*[@id="tblData"]')))
-        #             user_list_data = []
-        #             if user:
-        #                 user = user.text
-        #                 # print(user)
-        #                 userlist = user.split(" ")
-
-        #                 datalist = []
-        #                 for i in userlist:
-        #                     data = i.split('\n')
-        #                     datalist.append(data[0])
-        #                 user_list_data.append(datalist[0])
-        #                 datalist2 = []
-        #                 for i in userlist:
-        #                     data = i.split('\n')
-        #                     datalist2.append(data)
-        #                 datalist2
-        #                 for i in datalist2:
-        #                     if len(i) == 2:
-        #                         user_list_data.append(i[1])
         f = open('userdetails.json')
         data = json.load(f)
         usernameenter = data["username"]
@@ -105,8 +69,6 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
         print("startdateenter", startdateenter)
         print("starttimeenter", starttimeenter)
         print('endtimeenter', endtimeenter)
-        # for user_name in user_list_data:
-        #     if user_name == usernameenter:
         search_log = sleep_and_find(
             browser, '/html/body/div[2]/aside/section/ul/li[3]/a', By.XPATH)
         if search_log:
@@ -117,7 +79,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
             file1 = open("game.txt", "a+",
                          encoding="utf-8")
             file1.writelines(
-                "\n\nUser Name " + usernameenter+"\n")
+                "\nUser Name " + usernameenter+"\n")
             file1.close()
             search_field.clear()
             search_field.send_keys(usernameenter)
@@ -158,7 +120,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     except Exception as e:
                         print("Error duw tp", e)
 
-                    time.sleep(10)
+                    time.sleep(5+time_by_user)
                     try:
                         totalpages = browser.find_element(
                             By.CLASS_NAME, "laypage_last").text
@@ -189,7 +151,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                             next = browser.find_element(
                                 "xpath", "//a[@class='laypage_next']")
                             next.click()
-                            time.sleep(5+time_by_user)
+                            time.sleep(time_by_user)
                         except:
                             print("Hel")
                             continue
@@ -234,7 +196,38 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        '\n\nTotal BETS ' + str(bet_sum))
+                        '\n\nTotal BETS ' + str(round(bet_sum, 2)) + "\n")
+                    file1.close()
+
+                    # Total Wins
+                    Win = []
+                    for i in final_data:
+                        b = ''
+                        if i[3] == "-":
+                            print(type(i[3]))
+                            be = '0.00'
+                        elif i[3] == "game":
+                            be = i[4]
+                        elif i[3] == "Free":
+                            be = i[5]
+                        else:
+                            be = i[3]
+                        Win.append(be)
+                    Win_sun = float(0.0)
+                    for i in Win:
+                        i = float(i)
+                        Win_sun = Win_sun+i
+                    file1 = open(
+                        "game.txt", "a+", encoding="utf-8")
+                    file1.writelines(
+                        'Total WIN   ' + str(round(Win_sun, 2)) + "\n")
+                    file1.close()
+                    results = float(
+                        Win_sun)-float(bet_sum)
+                    file1 = open(
+                        "game.txt", "a+", encoding="utf-8")
+                    file1.writelines(
+                        "\nTotal NETTGAMING(Win/Loss) " + str(round(results, 2))+"\n")
                     file1.close()
 
                     # Total Free Games
@@ -256,7 +249,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
                         file1.writelines(
-                            "\n\nTotal FREE GAMES "+str(count)+"\n")
+                            "\n\nTotal FREE GAMES "+str(round(count, 2))+"\n")
                         file1.close()
 
                     free_game_list = []
@@ -269,7 +262,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        "\nFree game winning is  " + str(sum) + "\n")
+                        "\nFree game winning is  " + str(round(sum, 2)) + "\n")
                     file1.close()
                     file1 = open(
                         "free_game.txt", "a+", encoding="utf-8")
@@ -279,37 +272,6 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                         L = str(x).replace(
                             '[', '').replace(']', '')
                         file1.writelines(str(L)+"\n")
-                    file1.close()
-
-                    # Total Wins
-                    Win = []
-                    for i in final_data:
-                        b = ''
-                        if i[3] == "-":
-                            print(type(i[3]))
-                            be = '0.00'
-                        elif i[3] == "game":
-                            be = '0.00'
-                        elif i[3] == "Free":
-                            be = '0.00'
-                        else:
-                            be = i[3]
-                        Win.append(be)
-                    Win_sun = float(0.0)
-                    for i in Win:
-                        i = float(i)
-                        Win_sun = Win_sun+i
-                    file1 = open(
-                        "game.txt", "a+", encoding="utf-8")
-                    file1.writelines(
-                        'Total WIN   ' + str(Win_sun) + "\n")
-                    file1.close()
-                    results = float(
-                        Win_sun)-float(bet_sum)
-                    file1 = open(
-                        "game.txt", "a+", encoding="utf-8")
-                    file1.writelines(
-                        "\nTotal NETTGAMING(Win/Loss) " + str(results)+"\n")
                     file1.close()
 
                     def unique(list1):
@@ -327,7 +289,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        "Games Played " + gamelists + "\n")
+                        "\n\nGames Played are " + gamelists + "\n")
                     file1.close()
 
                     final_results = []
@@ -354,19 +316,22 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
                         file1.writelines(
-                            'No Banned games detected' + "\n")
+                            '\nNo Banned games detected' + "\n")
                         file1.close()
                     elif len(banned_game) > 0:
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
                         for game in banned_game:
                             file1.writelines(
-                                'Banned games played ' + game + "\n")
+                                '\nBanned games played ' + game + "\n")
                         file1.close()
                     data_from_tableID = []
                     for x in final_data:
                         if x[1] != '0':
                             data_from_tableID.append(x)
+                    file1 = open(
+                        "game.txt", "a+", encoding="utf-8")
+                    file1.writelines("\n\nImportant credit logs are \n")
                     for x in data_from_tableID:
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
@@ -388,10 +353,15 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        "\nTotal Transfer in " + str(transfer_in_sum) + "\n")
+                        "\n\nTotal Transfer in " + str(transfer_in_sum) + "\n")
                     file1.writelines(
-                        "\nTotal Transfer out " + str(transfer_out_sum) + "\n\n")
+                        "Total Transfer out " + str(transfer_out_sum) + "\n\n")
                     file1.close()
+
+                    file1 = open(
+                        "game.txt", "a+", encoding="utf-8")
+
+                    file1.writelines("\nGames Cronology is\n\n")
 
                     n = 0
                     endtime = ''
@@ -421,12 +391,13 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                             lastInstance[0] + " start time", starttime)
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
+
                         file1.writelines(
                             firsInstance[0] + "    end time     " + endtime+"\n")
                         file1.writelines(
                             lastInstance[0] + "    start time   " + starttime+"\n")
-                        file1.close()
-                        browser.quit()
+                    file1.close()
+                    browser.quit()
 
     else:
         print("Not login")
