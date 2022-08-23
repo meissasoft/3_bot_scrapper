@@ -10,25 +10,25 @@ warnings.filterwarnings('ignore')
 max_delay = 60
 
 
-def sleep_and_find(browser, selector, by, isAll=False, isVisbible=False):
-    myElem = False
+def sleep_and_find(browser, selector, by, is_all=False, is_visible=False):
+    my_elem = False
     for i in range(1, max_delay):
         try:
-            if isVisbible:
-                myElem = WebDriverWait(browser, 6).until(
+            if is_visible:
+                my_elem = WebDriverWait(browser, 6).until(
                     EC.invisibility_of_element((by, selector)))
                 break
-            if isAll:
-                myElem = WebDriverWait(browser, 6).until(
-                    EC.presence_of_all_elements_located(((by, selector))))
+            if is_all:
+                my_elem = WebDriverWait(browser, 6).until(
+                    EC.presence_of_all_elements_located((by, selector)))
                 break
             else:
-                myElem = WebDriverWait(browser, 6).until(
+                my_elem = WebDriverWait(browser, 6).until(
                     EC.presence_of_element_located((by, selector)))
                 break
         except Exception as ex:
             print("selector ", selector, " not found in ", str(i), " seconds")
-    return myElem
+    return my_elem
 
 
 def get_browser():
@@ -43,32 +43,32 @@ def get_browser():
 # Automatically Login
 
 
-f = open('loginCredientials.json')
-data = json.load(f)
-loginusernameenter = data["username"]
-urlenter = data["url"]
-passwordenter = data["password"]
-if urlenter != "" and loginusernameenter != '' and passwordenter != "":
+login_credentials = open('loginCredientials.json')
+data = json.load(login_credentials)
+login_username_enter = data["username"]
+URL_enter = data["url"]
+password_enter = data["password"]
+if URL_enter != "" and login_username_enter != '' and password_enter != "":
     browser = get_browser()
-    browser.get(urlenter)
+    browser.get(URL_enter)
     username = sleep_and_find(browser, 'userName', By.ID)
     password = sleep_and_find(browser, 'passWd', By.ID)
-    username.send_keys(loginusernameenter)
-    password.send_keys(passwordenter)
+    username.send_keys(login_username_enter)
+    password.send_keys(password_enter)
     login = sleep_and_find(browser, 'loginButton', By.ID)
     if login:
         login.click()
         f = open('userdetails.json')
         data = json.load(f)
-        usernameenter = data["username"]
-        startdateenter = data["startdate"]
-        starttimeenter = data["starttime"]
-        endtimeenter = data["endtime"]
+        username_enter = data["username"]
+        start_date_enter = data["startdate"]
+        start_time_enter = data["starttime"]
+        end_time_enter = data["endtime"]
         games = data["banned_games"]
         time_by_user = data["time_sleep"]
-        print("startdateenter", startdateenter)
-        print("starttimeenter", starttimeenter)
-        print('endtimeenter', endtimeenter)
+        print("start_date_enter", start_date_enter)
+        print("start_time_enter", start_time_enter)
+        print('end_time_enter', end_time_enter)
         search_log = sleep_and_find(
             browser, '/html/body/div[2]/aside/section/ul/li[3]/a', By.XPATH)
         if search_log:
@@ -79,10 +79,10 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
             file1 = open("game.txt", "a+",
                          encoding="utf-8")
             file1.writelines(
-                "\nUser Name " + usernameenter+"\n")
+                "\nUser Name " + username_enter + "\n")
             file1.close()
             search_field.clear()
-            search_field.send_keys(usernameenter)
+            search_field.send_keys(username_enter)
             ok_Button = sleep_and_find(
                 browser, 'Button_OK', By.ID)
             if ok_Button:
@@ -102,15 +102,15 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                 start_time_game_log.clear()
                 end_time_game_log.clear()
                 start_date_log.send_keys(
-                    startdateenter)
+                    start_date_enter)
                 start_time_game_log.send_keys(
                     keys.Keys.BACKSPACE * 10)
                 start_time_game_log.send_keys(
-                    starttimeenter)
+                    start_time_enter)
                 end_time_game_log.send_keys(
                     keys.Keys.BACKSPACE * 10)
                 end_time_game_log.send_keys(
-                    endtimeenter)
+                    end_time_enter)
                 ok_Button = sleep_and_find(
                     browser, 'Button_OK', By.ID)
                 if ok_Button:
@@ -122,20 +122,20 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
 
                     time.sleep(5+time_by_user)
                     try:
-                        totalpages = browser.find_element(
+                        total_pages = browser.find_element(
                             By.CLASS_NAME, "laypage_last").text
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
                         file1.writelines(
-                            "\nTotal Pages are " + totalpages + " \n")
+                            "\nTotal Pages are " + total_pages + " \n")
                         file1.close()
-                        print(totalpages)
+                        print(total_pages)
                     except:
                         pass
                     final_data = []
                     match_data = []
                     n = 1
-                    for n in range(int(totalpages)):
+                    for n in range(int(total_pages)):
                         rows = browser.find_elements(
                             "xpath", '//tr[@class="tr_h"]')
                         for row in rows:
@@ -148,9 +148,9 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                         try:
                             print(
                                 "next page===============================")
-                            next = browser.find_element(
+                            next_page = browser.find_element(
                                 "xpath", "//a[@class='laypage_next']")
-                            next.click()
+                            next_page.click()
                             time.sleep(time_by_user)
                         except:
                             print("Hel")
@@ -168,31 +168,30 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                             " end game time " + end_game_time + "\n")
                         file1.close()
                     # Total Bets
-                    Bet = []
+                    bet_list = []
                     try:
                         for i in final_data:
                             if i[2] == "Free" or i[2] == "-" or len(i[2]) > 5:
-                                be = '0.0'
+                                bet = '0.0'
                             else:
-                                be = i[2]
-                            Bet.append(be)
+                                bet = i[2]
+                            bet_list.append(bet)
                     except Exception as e:
                         print(e)
 
-                    Bet_Free_game = []
+                    bet_bree_game = []
                     try:
                         for i in final_data:
                             if i[2] == "Free" or len(i[2]) > 4 or i[3] == 'Free':
-                                be = '0.0'
+                                bet = '0.0'
                             else:
-                                be = i[2]
-                            Bet_Free_game.append(be)
+                                bet = i[2]
+                            bet_bree_game.append(bet)
                     except Exception as e:
                         print(e)
                     bet_sum = float(0.0)
-                    for i in Bet:
-                        i = float(i)
-                        bet_sum = bet_sum+i
+                    for i in bet_list:
+                        bet_sum = bet_sum + float(i)
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
@@ -205,25 +204,24 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                         b = ''
                         if i[3] == "-":
                             print(type(i[3]))
-                            be = '0.00'
+                            bet = '0.00'
                         elif i[3] == "game":
-                            be = i[4]
+                            bet = i[4]
                         elif i[3] == "Free":
-                            be = i[5]
+                            bet = i[5]
                         else:
-                            be = i[3]
-                        Win.append(be)
-                    Win_sun = float(0.0)
+                            bet = i[3]
+                        Win.append(bet)
+                    win_sum = float(0.0)
                     for i in Win:
-                        i = float(i)
-                        Win_sun = Win_sun+i
+                        win_sum = win_sum + float(i)
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        'Total WIN   ' + str(round(Win_sun, 2)) + "\n")
+                        'Total WIN   ' + str(round(win_sum, 2)) + "\n")
                     file1.close()
                     results = float(
-                        Win_sun)-float(bet_sum)
+                        win_sum) - float(bet_sum)
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
@@ -233,11 +231,11 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     # Total Free Games
 
                     word = '0.0'
-                    length = len(Bet_Free_game)
+                    length = len(bet_bree_game)
                     print(length)
                     count = 0
                     for i in range(0, length):
-                        if word == Bet_Free_game[i]:
+                        if word == bet_bree_game[i]:
                             count += 1
                     if count == 0:
                         file1 = open(
@@ -267,7 +265,7 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     file1 = open(
                         "free_game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        " user name " + usernameenter+"\n")
+                        " user name " + username_enter + "\n")
                     for x in free_game_list:
                         L = str(x).replace(
                             '[', '').replace(']', '')
@@ -284,12 +282,12 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     for ga in final_data:
                         l.append(ga[0])
                     game_list = unique(l)
-                    gamelists = ' '.join(
+                    game_lists = ' '.join(
                         [str(elem) for elem in game_list])
                     file1 = open(
                         "game.txt", "a+", encoding="utf-8")
                     file1.writelines(
-                        "\n\nGames Played are " + gamelists + "\n")
+                        "\n\nGames Played are " + game_lists + "\n")
                     file1.close()
 
                     final_results = []
@@ -364,8 +362,8 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                     file1.writelines("\nGames Cronology is\n\n")
 
                     n = 0
-                    endtime = ''
-                    starttime = ''
+                    end_time = ''
+                    start_time = ''
                     firsInstance = None
                     lastInstance = None
                     for game_name in game_list:
@@ -375,27 +373,27 @@ if urlenter != "" and loginusernameenter != '' and passwordenter != "":
                         for data in final_data:
                             if game_name in data:
                                 gameFound = True
-                                if (firsInstance is None):
+                                if firsInstance is None:
                                     firsInstance = data
-                                    endtime = ' '.join(
+                                    end_time = ' '.join(
                                         str(e) for e in firsInstance[-2:])
                                 lastInstance = data
-                                starttime = ' '.join(
+                                start_time = ' '.join(
                                     str(e) for e in lastInstance[-2:])
                             else:
                                 if gameFound:
                                     break
                         print(
-                            firsInstance[0]+" end time", endtime)
+                            firsInstance[0]+" end time", end_time)
                         print(
-                            lastInstance[0] + " start time", starttime)
+                            lastInstance[0] + " start time", start_time)
                         file1 = open(
                             "game.txt", "a+", encoding="utf-8")
 
                         file1.writelines(
-                            firsInstance[0] + "    end time     " + endtime+"\n")
+                            firsInstance[0] + "    end time     " + end_time + "\n")
                         file1.writelines(
-                            lastInstance[0] + "    start time   " + starttime+"\n")
+                            lastInstance[0] + "    start time   " + start_time + "\n")
                     file1.close()
                     browser.quit()
 
