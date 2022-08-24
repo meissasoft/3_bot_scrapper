@@ -6,7 +6,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common import keys
 
+USER_DETAILS_FILE = 'userdetails.json'
 GAME_TXT_FILE = "game.txt"
+
+USER_ID = "ID :"
+START_DATE_TIME = "Start Date Time :"
+END_DATE_TIME = "End Date Time :"
 
 max_delay = 60
 
@@ -36,7 +41,7 @@ def get_browser():
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-popup-blocking")
     options.add_argument("test-type")
-    chrome_browser = webdriver.Chrome('chromedriver.exe', chrome_options=options)
+    chrome_browser = webdriver.Chrome('chromedriver', chrome_options=options)
     return chrome_browser
 
 
@@ -65,7 +70,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
         login.click()
 
         search_user = sleep_and_find(browser, '#txt_UserName', By.CSS_SELECTOR)
-        user_details = open('userdetails.json')
+        user_details = open(USER_DETAILS_FILE)
         data = json.load(user_details)
         username_enter = data["username"]
         search_user.send_keys(username_enter)
@@ -76,7 +81,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
         if game_log:
             game_log.click()
 
-            user_details = open('userdetails.json')
+            user_details = open(USER_DETAILS_FILE)
             data = json.load(user_details)
             username_enter = data["username"]
             start_date_enter = data["startdate"]
@@ -94,7 +99,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 EC.element_to_be_clickable((By.ID, "txt_EndDateTime_HM"))
             )
             file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("User Name " + username_enter + "\n\n")
+            file1.writelines(USER_ID + username_enter + "\n\n")
             file1.close()
             start_date_log.clear()
             start_time_game_log.clear()
@@ -202,6 +207,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                     bet_list.append(bet)
             except Exception as e:
                 print(e)
+
             bet_free_game = []
             try:
                 for i in data_tableId:
@@ -212,6 +218,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                     bet_free_game.append(bet)
             except Exception as e:
                 print(e)
+
             bet_sum = float(0.0)
             for i in bet_list:
                 bet_sum = bet_sum + float(i)
@@ -239,7 +246,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             file1.close()
             results = float(win_sum) - float(bet_sum)
             file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("Total NETTGAMING(Win/Loss) " + str(round(results, 2)) + "\n")
+            file1.writelines("Total NETT GAMING(Win/Loss) " + str(round(results, 2)) + "\n")
             file1.close()
 
             # Total Free Games
