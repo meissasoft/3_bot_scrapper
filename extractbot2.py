@@ -1,6 +1,7 @@
 import json
 from selenium import webdriver
 import time
+import re
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -52,6 +53,53 @@ login_username_enter = data["username"]
 URL_enter = data["url"]
 password_enter = data["password"]
 
+
+def find_games_chronology(games_name: list, data_table_Id):
+    game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+    game_txt_file.writelines("\nGame Chronology\n")
+    end_time = ''
+    start_time = ''
+
+    for game_name in games_name:
+        firs_instance = None
+        last_instance = None
+
+        game_found = False
+        for data_item in data_table_Id:
+            if game_name in data_item:
+                game_found = True
+                print("game_name", game_name)
+                print("game_data", data_item)
+                if firs_instance is None:
+                    firs_instance = data_item
+                    print("firs_instance", firs_instance)
+                    end_time = ' '.join(str(e) for e in firs_instance[-2:])
+                last_instance = data_item
+                print("last_instance", last_instance)
+                start_time = ' '.join(str(e) for e in last_instance[-2:])
+            else:
+                if game_found:
+                    break
+
+        print(firs_instance[0] + " end time", end_time)
+        print(last_instance[0] + " start time", start_time)
+        game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+        game_txt_file.writelines(last_instance[0] + " " + start_time + "\n")
+        game_txt_file.writelines(firs_instance[0] + " " + end_time + "\n")
+    game_txt_file.close()
+
+
+def find_unique(list1):
+    unique_list = []
+    prev_value = None
+    for x in list1:
+        # x containing alphabet or chinese
+        if (x.isalpha() or re.search(u'[\u4e00-\u9fff]', x)) and (x not in unique_list or x != prev_value):
+            unique_list.append(x)
+        prev_value = x
+    return unique_list
+
+
 if URL_enter != "" and login_username_enter != '' and password_enter != "":
     browser = get_browser()
     browser.get(URL_enter)
@@ -98,9 +146,13 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             end_time_game_log = WebDriverWait(browser, 60).until(
                 EC.element_to_be_clickable((By.ID, "txt_EndDateTime_HM"))
             )
+
             file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines(USER_ID + username_enter + "\n\n")
+            file1.writelines("\n" + USER_ID + username_enter + "\n")
+            file1.writelines(START_DATE_TIME + start_date_enter + " " + start_time_enter + "\n")
+            file1.writelines(END_DATE_TIME + end_time_enter + " " + end_time_enter + "\n")
             file1.close()
+
             start_date_log.clear()
             start_time_game_log.clear()
             end_time_game_log.clear()
@@ -125,16 +177,17 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
 
             try:
                 total_pages = browser.find_element(By.CLASS_NAME, 'laypage_last').text
-                print("total_pages: ", total_pages)
-                file1 = open(GAME_TXT_FILE, "a+")
-                file1.writelines("\nTotal Pages are: " + total_pages + " \n")
-                file1.close()
+                # print("total_pages: ", total_pages)
+                # file1 = open(GAME_TXT_FILE, "a+")
+                # file1.writelines("\nTotal Pages are: " + total_pages + " \n")
+                # file1.close()
 
             except:
-                total_pages = '1'
-                file1 = open(GAME_TXT_FILE, "a+")
-                file1.writelines("\nTotal Pages are: " + total_pages + " \n")
-                file1.close()
+                pass
+                # total_pages = '1'
+                # file1 = open(GAME_TXT_FILE, "a+")
+                # file1.writelines("\nTotal Pages are: " + total_pages + " \n")
+                # file1.close()
             final_data = []
             match_data = []
             key = ["RedEnvelope", "JackPot", "Setscore"]
@@ -144,13 +197,13 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 time.sleep(time_by_user)
                 rows = browser.find_elements("xpath", '//*[@id="tblData"]')
                 for row in rows:
-                    row = row.text\
-                        .replace("SAFARI Heat", "SAFARIHeat")\
-                        .replace("god of", "godof")\
-                        .replace("Neptune Treasure", "NeptuneTreasure")\
-                        .replace("Sultan`s Gold", "Sultan`sGold")\
-                        .replace("Wong Choy", "WongChoy")\
-                        .replace('Lion Dance', 'LionDance')\
+                    row = row.text \
+                        .replace("SAFARI Heat", "SAFARIHeat") \
+                        .replace("god of", "godof") \
+                        .replace("Neptune Treasure", "NeptuneTreasure") \
+                        .replace("Sultan`s Gold", "Sultan`sGold") \
+                        .replace("Wong Choy", "WongChoy") \
+                        .replace('Lion Dance', 'LionDance') \
                         .replace('Hologram Wilds', 'HologramWilds').split("\n")
                     final_data.append(row)
                 try:
@@ -164,13 +217,6 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             browser.switch_to.default_content()
 
 
-            def unique(list1):
-                unique_list = []
-                for x in list1:
-                    if x not in unique_list:
-                        unique_list.append(x)
-                return unique_list
-
 
             data_split = []
             for i in final_data:
@@ -183,18 +229,21 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 data_space_split = i[0].split(" ")
                 data_tableId.append(data_space_split)
 
-            gm_list = []
+            games_name_list = []
             for game in data_tableId:
-                gm_list.append(game[0])
-            game_list = unique(gm_list)
+                games_name_list.append(game[0])
+            # Todo add multiple gamse with same name also
+            game_list = find_unique(games_name_list)
 
-            end_game_time = data_tableId[0][-2] + " " + data_tableId[0][-1]
-            start_game_time = data_tableId[-1][-2] + " " + data_tableId[-1][-1]
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-
-            file1.writelines('Start time game log ' + start_game_time + "\n")
-            file1.writelines('End time game log ' + end_game_time + "\n\n")
-            file1.close()
+            find_games_chronology(game_list, data_tableId)
+            # # how is calculating?
+            # end_game_time = data_tableId[0][-2] + " " + data_tableId[0][-1]
+            # start_game_time = data_tableId[-1][-2] + " " + data_tableId[-1][-1]
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            #
+            # file1.writelines('Start time game log ' + start_game_time + "\n")
+            # file1.writelines('End time game log ' + end_game_time + "\n\n")
+            # file1.close()
 
             # Total Bets
             bet_list = []
@@ -305,7 +354,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             banned_game_list = []
             for i in final_results:
                 banned_game_list.append(i[0])
-            banned_game = unique(banned_game_list)
+            banned_game = find_unique(banned_game_list)
             if len(final_results) > 0:
                 for x in final_results:
                     file1 = open("banned_game_list.txt", "a+", encoding="utf-8")
@@ -353,42 +402,8 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             file1.writelines("Total Transfer out " + str(total_transfer_out) + "\n\n")
             file1.close()
 
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("\nGames Cronology is\n\n")
-            end_time = ''
-            start_time = ''
-
-            for game_name in game_list:
-                firsInstance = None
-                lastInstance = None
-
-                gameFound = False
-                for data in data_tableId:
-                    if game_name in data:
-                        gameFound = True
-                        print("game_name", game_name)
-                        print("game_data", data)
-                        if firsInstance is None:
-                            firsInstance = data
-                            print("firsInstance", firsInstance)
-                            end_time = ' '.join(
-                                str(e) for e in firsInstance[-2:])
-                        lastInstance = data
-                        print("lastInstance", lastInstance)
-                        start_time = ' '.join(
-                            str(e) for e in lastInstance[-2:])
-                    else:
-                        if gameFound:
-                            break
-
-                print(firsInstance[0] + " end time", end_time)
-                print(lastInstance[0] + " start time", start_time)
-                file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-                file1.writelines(firsInstance[0] + "    end time     " + end_time + "\n")
-                file1.writelines(lastInstance[0] + "    start time   " + start_time + "\n")
             file1.close()
             browser.quit()
-
         else:
             browser.close()
 
