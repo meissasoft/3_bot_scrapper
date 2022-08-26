@@ -1,4 +1,6 @@
 import json
+from typing import List
+
 from selenium import webdriver
 import time
 import re
@@ -100,6 +102,46 @@ def find_unique(list1):
     return unique_list
 
 
+def get_table_rows_data(total_table_pages, ) -> List:
+    table_rows_data = []
+    game_name = None
+    games_data_dict = {}
+    single_game_list = []
+
+    for n in range(int(total_table_pages)):
+
+        time.sleep(time_by_user)
+        page = browser.find_elements("xpath", '//*[@id="tblData"]')
+        for rows in page:
+            rows = rows.text \
+                .replace("SAFARI Heat", "SAFARIHeat") \
+                .replace("god of", "godof") \
+                .replace("Neptune Treasure", "NeptuneTreasure") \
+                .replace("Sultan`s Gold", "Sultan`sGold") \
+                .replace("Wong Choy", "WongChoy") \
+                .replace('Lion Dance', 'LionDance') \
+                .replace('Hologram Wilds', 'HologramWilds').split("\n")
+
+            for row in rows:
+                new_row = row.split(' ')
+                if game_name and game_name != new_row[0]:
+                    games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = single_game_list
+                    single_game_list = []
+                    print("row====================, ", new_row)
+                single_game_list.append(row)
+                game_name = new_row[0]
+            table_rows_data.append(rows)
+        try:
+            print(f"Page Number========={n + 1}======================")
+            next_page = WebDriverWait(browser, 2).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, 'laypage_next')))
+            next_page.click()
+        except Exception as ex:
+            print(f"Exception: {str(ex)}")
+            break
+    return table_rows_data
+
+
 if URL_enter != "" and login_username_enter != '' and password_enter != "":
     browser = get_browser()
     browser.get(URL_enter)
@@ -188,35 +230,9 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 # file1 = open(GAME_TXT_FILE, "a+")
                 # file1.writelines("\nTotal Pages are: " + total_pages + " \n")
                 # file1.close()
-            final_data = []
-            match_data = []
-            key = ["RedEnvelope", "JackPot", "Setscore"]
-            n = 0
-            for n in range(int(total_pages)):
+            final_data = get_table_rows_data(total_pages)
 
-                time.sleep(time_by_user)
-                rows = browser.find_elements("xpath", '//*[@id="tblData"]')
-                for row in rows:
-                    row = row.text \
-                        .replace("SAFARI Heat", "SAFARIHeat") \
-                        .replace("god of", "godof") \
-                        .replace("Neptune Treasure", "NeptuneTreasure") \
-                        .replace("Sultan`s Gold", "Sultan`sGold") \
-                        .replace("Wong Choy", "WongChoy") \
-                        .replace('Lion Dance', 'LionDance') \
-                        .replace('Hologram Wilds', 'HologramWilds').split("\n")
-                    final_data.append(row)
-                try:
-                    print(f"Page Number========={n + 1}======================")
-                    next_page = WebDriverWait(browser, 2).until(
-                        EC.element_to_be_clickable((By.CLASS_NAME, 'laypage_next')))
-                    next_page.click()
-                except Exception as ex:
-                    print(f"Exception: {str(ex)}")
-                    break
             browser.switch_to.default_content()
-
-
 
             data_split = []
             for i in final_data:
