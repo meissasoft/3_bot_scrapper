@@ -146,6 +146,10 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                         .replace("Sultan`s Gold", "Sultan`sGold")\
                         .replace("Wong Choy", "WongChoy")\
                         .replace('Lion Dance', 'LionDance')\
+                        .replace('Great Rhino', 'GreatRhino') \
+                        .replace('Dragon Gold', 'DragonGold') \
+                        .replace('Football Fans', 'FootballFans') \
+                        .replace('Tally Ho', 'TallyHo') \
                         .replace('Hologram Wilds', 'HologramWilds').split("\n")
                     final_data.append(row)
                 try:

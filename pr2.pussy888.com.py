@@ -139,8 +139,18 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                         rows = browser.find_elements(
                             "xpath", '//tr[@class="tr_h"]')
                         for row in rows:
-                            row = str(row.text).replace("Neptune Treasure", "NeptuneTreasure").replace("SAFARI Heat", "SAFARIHeat").replace("god of", "godof").replace("Sultan`s Gold", "Sultan`sGold").replace("Wong Choy", "WongChoy").replace(
-                                'Great Rhino', 'GreatRhino').replace('Dragon Gold', 'DragonGold').replace('Football Fans', 'FootballFans').replace('Tally Ho', 'TallyHo').replace('Hologram Wilds', 'HologramWilds')
+                            row = str(row.text)\
+                                .replace("Neptune Treasure", "NeptuneTreasure")\
+                                .replace("SAFARI Heat", "SAFARIHeat")\
+                                .replace("god of", "godof")\
+                                .replace("Sultan`s Gold", "Sultan`sGold")\
+                                .replace("Wong Choy", "WongChoy")\
+                                .replace('Lion Dance', 'LionDance')\
+                                .replace('Great Rhino', 'GreatRhino')\
+                                .replace('Dragon Gold', 'DragonGold')\
+                                .replace('Football Fans', 'FootballFans')\
+                                .replace('Tally Ho', 'TallyHo')\
+                                .replace('Hologram Wilds', 'HologramWilds')
                             row = row.split(" ")
                             final_data.append(row)
                             # print("row",row)
