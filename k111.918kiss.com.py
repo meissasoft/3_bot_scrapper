@@ -187,8 +187,18 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
         for n in range(int(total_pages)):
             rows = driver.find_elements("xpath", '//tr[@class="tr_h"]')
             for row in rows:
-                row = row.text.replace("SAFARI Heat", "SAFARIHeat").replace("god of", "godof").replace("Sultan`s Gold", "Sultan`sGold").replace("Wong Choy", "WongChoy").replace("Neptune Treasure", "NeptuneTreasure").replace(
-                    'Great Rhino', 'GreatRhino').replace('Dragon Gold', 'DragonGold').replace('Football Fans', 'FootballFans').replace('Tally Ho', 'TallyHo').replace('Hologram Wilds', 'HologramWilds').split(" ")
+                row = row.text\
+                    .replace("SAFARI Heat", "SAFARIHeat")\
+                    .replace("god of", "godof")\
+                    .replace("Sultan`s Gold", "Sultan`sGold")\
+                    .replace("Wong Choy", "WongChoy")\
+                    .replace("Neptune Treasure", "NeptuneTreasure")\
+                    .replace('Lion Dance', 'LionDance')\
+                    .replace('Great Rhino', 'GreatRhino')\
+                    .replace('Dragon Gold', 'DragonGold')\
+                    .replace('Football Fans', 'FootballFans')\
+                    .replace('Tally Ho', 'TallyHo')\
+                    .replace('Hologram Wilds', 'HologramWilds').split(" ")
                 # print("row",row)
                 if len(row) == 8:
                     final_data.append(row)
