@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Dict
 
 from selenium import webdriver
 import time
@@ -44,7 +44,7 @@ def get_browser():
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-popup-blocking")
     options.add_argument("test-type")
-    chrome_browser = webdriver.Chrome('chromedriver', chrome_options=options)
+    chrome_browser = webdriver.Chrome('chromedriver.exe', chrome_options=options)
     return chrome_browser
 
 
@@ -56,38 +56,13 @@ URL_enter = data["url"]
 password_enter = data["password"]
 
 
-def find_games_chronology(games_name: list, data_table_Id):
+def find_games_chronology(games_data_dict: Dict):
     game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
     game_txt_file.writelines("\nGame Chronology\n")
-    end_time = ''
-    start_time = ''
-
-    for game_name in games_name:
-        firs_instance = None
-        last_instance = None
-
-        game_found = False
-        for data_item in data_table_Id:
-            if game_name in data_item:
-                game_found = True
-                print("game_name", game_name)
-                print("game_data", data_item)
-                if firs_instance is None:
-                    firs_instance = data_item
-                    print("firs_instance", firs_instance)
-                    end_time = ' '.join(str(e) for e in firs_instance[-2:])
-                last_instance = data_item
-                print("last_instance", last_instance)
-                start_time = ' '.join(str(e) for e in last_instance[-2:])
-            else:
-                if game_found:
-                    break
-
-        print(firs_instance[0] + " end time", end_time)
-        print(last_instance[0] + " start time", start_time)
-        game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-        game_txt_file.writelines(last_instance[0] + " " + start_time + "\n")
-        game_txt_file.writelines(firs_instance[0] + " " + end_time + "\n")
+    for game_dict in games_data_dict:
+        game_name = game_dict.split('_')
+        game_txt_file.writelines(game_name[0] + " " + games_data_dict[game_dict]["game_started_at"] + "\n")
+        game_txt_file.writelines(game_name[0] + " " + games_data_dict[game_dict]["game_ended_at"] + "\n")
     game_txt_file.close()
 
 
@@ -102,11 +77,10 @@ def find_unique(list1):
     return unique_list
 
 
-def get_table_rows_data(total_table_pages, ) -> List:
+def get_table_rows_data(total_table_pages):
     table_rows_data = []
-    game_name = None
     games_data_dict = {}
-    single_game_list = []
+    game_name = None
 
     for n in range(int(total_table_pages)):
 
@@ -120,17 +94,39 @@ def get_table_rows_data(total_table_pages, ) -> List:
                 .replace("Sultan`s Gold", "Sultan`sGold") \
                 .replace("Wong Choy", "WongChoy") \
                 .replace('Lion Dance', 'LionDance') \
+                .replace('Great Rhino', 'GreatRhino') \
+                .replace('Dragon Gold', 'DragonGold') \
+                .replace('Football Fans', 'FootballFans') \
+                .replace('Tally Ho', 'TallyHo') \
                 .replace('Hologram Wilds', 'HologramWilds').split("\n")
 
+            table_rows_data.append(rows)
+
+            # adding every game into dictionary
             for row in rows:
                 new_row = row.split(' ')
-                if game_name and game_name != new_row[0]:
-                    games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = single_game_list
-                    single_game_list = []
-                    print("row====================, ", new_row)
-                single_game_list.append(row)
-                game_name = new_row[0]
-            table_rows_data.append(rows)
+                if new_row[0].isalpha() or re.search(u'[\u4e00-\u9fff]', new_row[0]):
+                    if game_name and game_name != new_row[0]:
+                        make_dict_index = f"{new_row[0]}_game_{len(games_data_dict) + 1}"
+                        games_data_dict[make_dict_index] = {
+                            f"{new_row[0]}": [],
+                            "game_started_at": new_row[-2] + " " + new_row[-1],
+                            "game_ended_at": new_row[-2] + " " + new_row[-1]
+                        }
+
+                    game_name = new_row[0]
+                    if len(games_data_dict) == 0:
+                        games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = {
+                            f"{game_name}": [new_row],
+                            "game_started_at": new_row[-2] + " " + new_row[-1],
+                            "game_ended_at": new_row[-2] + " " + new_row[-1]
+                        }
+                    else:
+                        dict_index = f"{game_name}_game_{len(games_data_dict)}"
+                        games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][
+                                                                          f"{game_name}"] + [new_row]
+                        games_data_dict[dict_index]["game_started_at"] = new_row[-2] + " " + new_row[-1]
+
         try:
             print(f"Page Number========={n + 1}======================")
             next_page = WebDriverWait(browser, 2).until(
@@ -139,7 +135,7 @@ def get_table_rows_data(total_table_pages, ) -> List:
         except Exception as ex:
             print(f"Exception: {str(ex)}")
             break
-    return table_rows_data
+    return table_rows_data, games_data_dict
 
 
 if URL_enter != "" and login_username_enter != '' and password_enter != "":
@@ -230,7 +226,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 # file1 = open(GAME_TXT_FILE, "a+")
                 # file1.writelines("\nTotal Pages are: " + total_pages + " \n")
                 # file1.close()
-            final_data = get_table_rows_data(total_pages)
+            final_data, final_games_data_dict = get_table_rows_data(total_pages)
 
             browser.switch_to.default_content()
 
@@ -251,7 +247,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             # Todo add multiple gamse with same name also
             game_list = find_unique(games_name_list)
 
-            find_games_chronology(game_list, data_tableId)
+            find_games_chronology(final_games_data_dict)
             # # how is calculating?
             # end_game_time = data_tableId[0][-2] + " " + data_tableId[0][-1]
             # start_game_time = data_tableId[-1][-2] + " " + data_tableId[-1][-1]
