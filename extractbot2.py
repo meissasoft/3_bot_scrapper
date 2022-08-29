@@ -24,19 +24,18 @@ def sleep_and_find(browser, selector, by, is_all=False, is_visible=False):
     for i in range(1, max_delay):
         try:
             if is_visible:
-                my_elem = WebDriverWait(browser, i).until(
-                    EC.invisibility_of_element((by, selector)))
+                my_elem = WebDriverWait(browser, i).until(EC.invisibility_of_element((by, selector)))
+
                 break
             if is_all:
-                my_elem = WebDriverWait(browser, i).until(
-                    EC.presence_of_all_elements_located((by, selector)))
-                break
+                my_elem = WebDriverWait(browser, i).until(EC.presence_of_all_elements_located((by, selector)))
+
             else:
-                my_elem = WebDriverWait(browser, i).until(
-                    EC.presence_of_element_located((by, selector)))
-                break
+                my_elem = WebDriverWait(browser, i).until(EC.presence_of_element_located((by, selector)))
+
+            break
         except Exception as ex:
-            print("selector ", selector, " not found in ", str(i), " seconds")
+            print("selector ", selector, " not found in ", i, " seconds")
     return my_elem
 
 
@@ -44,8 +43,7 @@ def get_browser():
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-popup-blocking")
     options.add_argument("test-type")
-    chrome_browser = webdriver.Chrome('chromedriver.exe', chrome_options=options)
-    return chrome_browser
+    return webdriver.Chrome('chromedriver.exe', chrome_options=options)
 
 
 # Automatically Login
@@ -63,6 +61,30 @@ def find_games_chronology(games_data_dict: Dict):
         game_name = game_dict.split('_')
         game_txt_file.writelines(game_name[0] + " " + games_data_dict[game_dict]["game_started_at"] + "\n")
         game_txt_file.writelines(game_name[0] + " " + games_data_dict[game_dict]["game_ended_at"] + "\n")
+    game_txt_file.close()
+
+
+def find_free_games(games_data_dict: Dict):
+    game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+    game_txt_file.writelines("\nFree Games\n")
+    free_game_started_at = None
+    total_free_games_wins: float = 0.0
+    win_amount_sum: float = 0.0
+    for game_dict in games_data_dict:
+        game_name = game_dict.split('_')
+        for game_item in games_data_dict[game_dict][game_name[0]]:
+            is_free_game = False
+            if game_item[2] == "Free":
+                is_free_game = True
+                win_amount_sum = win_amount_sum + float(game_item[4])
+                free_game_started_at = f"{game_item[-2]} {game_item[-1]}"
+
+            if is_free_game:
+                total_free_games_wins = win_amount_sum + win_amount_sum
+                game_txt_file.writelines(f"{game_name[0]} free game win is + {round(win_amount_sum, 2)} {free_game_started_at}\n")
+            print(game_item)
+    # Todo where from get date for total from game wins
+    game_txt_file.writelines(f"Total free game win is + {round(total_free_games_wins, 2)} {free_game_started_at}\n")
     game_txt_file.close()
 
 
@@ -110,22 +132,22 @@ def get_table_rows_data(total_table_pages):
                         make_dict_index = f"{new_row[0]}_game_{len(games_data_dict) + 1}"
                         games_data_dict[make_dict_index] = {
                             f"{new_row[0]}": [],
-                            "game_started_at": new_row[-2] + " " + new_row[-1],
-                            "game_ended_at": new_row[-2] + " " + new_row[-1]
+                            "game_started_at": f"{new_row[-2]} {new_row[-1]}",
+                            "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
                         }
 
                     game_name = new_row[0]
-                    if len(games_data_dict) == 0:
+                    if not games_data_dict:
                         games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = {
                             f"{game_name}": [new_row],
-                            "game_started_at": new_row[-2] + " " + new_row[-1],
-                            "game_ended_at": new_row[-2] + " " + new_row[-1]
+                            "game_started_at": f"{new_row[-2]} {new_row[-1]}",
+                            "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
                         }
+
                     else:
                         dict_index = f"{game_name}_game_{len(games_data_dict)}"
-                        games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][
-                                                                          f"{game_name}"] + [new_row]
-                        games_data_dict[dict_index]["game_started_at"] = new_row[-2] + " " + new_row[-1]
+                        games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][f"{game_name}"] + [new_row]
+                        games_data_dict[dict_index]["game_started_at"] = f"{new_row[-2]} {new_row[-1]}"
 
         try:
             print(f"Page Number========={n + 1}======================")
@@ -248,6 +270,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             game_list = find_unique(games_name_list)
 
             find_games_chronology(final_games_data_dict)
+            find_free_games(final_games_data_dict)
             # # how is calculating?
             # end_game_time = data_tableId[0][-2] + " " + data_tableId[0][-1]
             # start_game_time = data_tableId[-1][-2] + " " + data_tableId[-1][-1]
