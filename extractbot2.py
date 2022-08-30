@@ -43,7 +43,7 @@ def get_browser():
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-popup-blocking")
     options.add_argument("test-type")
-    return webdriver.Chrome('chromedriver.exe', chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 
 # Automatically Login
@@ -55,37 +55,43 @@ password_enter = data["password"]
 
 
 def find_games_chronology(games_data_dict: Dict):
-    game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-    game_txt_file.writelines("\nGame Chronology\n")
-    for game_dict in games_data_dict:
-        game_name = game_dict.split('_')
-        game_txt_file.writelines(game_name[0] + " " + games_data_dict[game_dict]["game_started_at"] + "\n")
-        game_txt_file.writelines(game_name[0] + " " + games_data_dict[game_dict]["game_ended_at"] + "\n")
-    game_txt_file.close()
+    with open(GAME_TXT_FILE, "a+", encoding="utf-8") as game_txt_file:
+        game_txt_file.writelines("\nGame Chronology\n")
+        for game_dict in games_data_dict:
+            game_name = game_dict.split('_')
+            game_txt_file.writelines(f"{game_name[0]} " + games_data_dict[game_dict]["game_started_at"] + "\n")
+
+            game_txt_file.writelines(f"{game_name[0]} " + games_data_dict[game_dict]["game_ended_at"] + "\n")
 
 
 def find_free_games(games_data_dict: Dict):
-    game_txt_file = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-    game_txt_file.writelines("\nFree Games\n")
-    free_game_started_at = None
-    total_free_games_wins: float = 0.0
-    win_amount_sum: float = 0.0
-    for game_dict in games_data_dict:
-        game_name = game_dict.split('_')
-        for game_item in games_data_dict[game_dict][game_name[0]]:
+    with open(GAME_TXT_FILE, "a+", encoding="utf-8") as game_txt_file:
+        game_txt_file.writelines("\nFree Games\n")
+        free_game_started_at = None
+        total_free_games_wins: float = 0.0
+        for game_dict in games_data_dict:
             is_free_game = False
-            if game_item[2] == "Free":
-                is_free_game = True
-                win_amount_sum = win_amount_sum + float(game_item[4])
-                free_game_started_at = f"{game_item[-2]} {game_item[-1]}"
-
+            win_amount_sum: float = 0.0
+            game_name = game_dict.split('_')
+            for game_item in games_data_dict[game_dict][game_name[0]]:
+                if game_item[2] == "Free":
+                    is_free_game = True
+                    win_amount_sum += float(game_item[4])
+                    free_game_started_at = f"{game_item[-2]} {game_item[-1]}"
             if is_free_game:
-                total_free_games_wins = win_amount_sum + win_amount_sum
+                total_free_games_wins += win_amount_sum
                 game_txt_file.writelines(f"{game_name[0]} free game win is + {round(win_amount_sum, 2)} {free_game_started_at}\n")
-            print(game_item)
-    # Todo where from get date for total from game wins
-    game_txt_file.writelines(f"Total free game win is + {round(total_free_games_wins, 2)} {free_game_started_at}\n")
-    game_txt_file.close()
+
+        game_txt_file.writelines(f"Total free game win is + {round(total_free_games_wins, 2)}\n")
+
+
+def other_wins_games(other_games: Dict):
+    with open(GAME_TXT_FILE, "a+", encoding="utf-8") as game_txt_file:
+        game_txt_file.writelines("\nOther Wins\n")
+        for game_dict in other_games:
+            game_txt_file.writelines(
+                f"{other_games[game_dict]['name']} + {other_games[game_dict]['score']} {other_games[game_dict]['other_game_date_time']}\n"
+            )
 
 
 def find_unique(list1):
@@ -102,6 +108,7 @@ def find_unique(list1):
 def get_table_rows_data(total_table_pages):
     table_rows_data = []
     games_data_dict = {}
+    other_games = {}
     game_name = None
 
     for n in range(int(total_table_pages)):
@@ -128,27 +135,44 @@ def get_table_rows_data(total_table_pages):
             for row in rows:
                 new_row = row.split(' ')
                 if new_row[0].isalpha() or re.search(u'[\u4e00-\u9fff]', new_row[0]):
-                    if game_name and game_name != new_row[0]:
-                        make_dict_index = f"{new_row[0]}_game_{len(games_data_dict) + 1}"
-                        games_data_dict[make_dict_index] = {
-                            f"{new_row[0]}": [],
-                            "game_started_at": f"{new_row[-2]} {new_row[-1]}",
-                            "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
+                    if new_row[0] == "Red":
+                        game_score = new_row[1][-5:]
+                        other_games_make_dict_index = f"{new_row[0]}_{new_row[1][:-6]}_game_{len(other_games) + 1}"
+                        other_games[other_games_make_dict_index] = {
+                            "name": "Red Envelope",
+                            "score": game_score,
+                            "other_game_date_time": f"{new_row[-2]} {new_row[-1]}"
                         }
-
-                    game_name = new_row[0]
-                    if not games_data_dict:
-                        games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = {
-                            f"{game_name}": [new_row],
-                            "game_started_at": f"{new_row[-2]} {new_row[-1]}",
-                            "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
-                        }
-
                     else:
-                        dict_index = f"{game_name}_game_{len(games_data_dict)}"
-                        games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][f"{game_name}"] + [new_row]
-                        games_data_dict[dict_index]["game_started_at"] = f"{new_row[-2]} {new_row[-1]}"
+                        if game_name and game_name != new_row[0]:
+                            make_dict_index = f"{new_row[0]}_game_{len(games_data_dict) + 1}"
+                            games_data_dict[make_dict_index] = {
+                                f"{new_row[0]}": [],
+                                "game_started_at": f"{new_row[-2]} {new_row[-1]}",
+                                "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
+                            }
 
+                        game_name = new_row[0]
+                        if not games_data_dict:
+                            games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = {
+                                f"{game_name}": [new_row],
+                                "game_started_at": f"{new_row[-2]} {new_row[-1]}",
+                                "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
+                            }
+
+                        else:
+                            dict_index = f"{game_name}_game_{len(games_data_dict)}"
+                            games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][f"{game_name}"] + [
+                                new_row]
+                            games_data_dict[dict_index]["game_started_at"] = f"{new_row[-2]} {new_row[-1]}"
+                else:
+                    game_score = new_row[2][-5:]
+                    other_games_make_dict_index = f"{new_row[1]}_{new_row[2][:-7]}_game_{len(other_games) + 1}"
+                    other_games[other_games_make_dict_index] = {
+                        "name": f"{new_row[1]} {new_row[2][:-6]}",
+                        "score": game_score,
+                        "other_game_date_time": f"{new_row[-2]} {new_row[-1]}"
+                    }
         try:
             print(f"Page Number========={n + 1}======================")
             next_page = WebDriverWait(browser, 2).until(
@@ -157,7 +181,8 @@ def get_table_rows_data(total_table_pages):
         except Exception as ex:
             print(f"Exception: {str(ex)}")
             break
-    return table_rows_data, games_data_dict
+
+    return table_rows_data, games_data_dict, other_games
 
 
 if URL_enter != "" and login_username_enter != '' and password_enter != "":
@@ -208,7 +233,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             )
 
             file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("\n" + USER_ID + username_enter + "\n")
+            file1.writelines(USER_ID + username_enter + "\n")
             file1.writelines(START_DATE_TIME + start_date_enter + " " + start_time_enter + "\n")
             file1.writelines(END_DATE_TIME + end_time_enter + " " + end_time_enter + "\n")
             file1.close()
@@ -248,7 +273,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 # file1 = open(GAME_TXT_FILE, "a+")
                 # file1.writelines("\nTotal Pages are: " + total_pages + " \n")
                 # file1.close()
-            final_data, final_games_data_dict = get_table_rows_data(total_pages)
+            final_data, final_games_data_dict, other_wins_games_data = get_table_rows_data(total_pages)
 
             browser.switch_to.default_content()
 
@@ -270,7 +295,10 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             game_list = find_unique(games_name_list)
 
             find_games_chronology(final_games_data_dict)
+
             find_free_games(final_games_data_dict)
+            other_wins_games(other_wins_games_data)
+
             # # how is calculating?
             # end_game_time = data_tableId[0][-2] + " " + data_tableId[0][-1]
             # start_game_time = data_tableId[-1][-2] + " " + data_tableId[-1][-1]
@@ -281,95 +309,95 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             # file1.close()
 
             # Total Bets
-            bet_list = []
-            try:
-                for i in data_tableId:
-                    if i[2] == "Free" or i[2] == "-" or len(i[2]) > 5:
-                        bet = '0.0'
-                    else:
-                        bet = i[2]
-                    bet_list.append(bet)
-            except Exception as e:
-                print(e)
+            # bet_list = []
+            # try:
+            #     for i in data_tableId:
+            #         if i[2] == "Free" or i[2] == "-" or len(i[2]) > 5:
+            #             bet = '0.0'
+            #         else:
+            #             bet = i[2]
+            #         bet_list.append(bet)
+            # except Exception as e:
+            #     print(e)
 
-            bet_free_game = []
-            try:
-                for i in data_tableId:
-                    if i[2] == "Free" or i[3] == 'Free':
-                        bet = '0.0'
-                    else:
-                        bet = i[2]
-                    bet_free_game.append(bet)
-            except Exception as e:
-                print(e)
+            # bet_free_game = []
+            # try:
+            #     for i in data_tableId:
+            #         if i[2] == "Free" or i[3] == 'Free':
+            #             bet = '0.0'
+            #         else:
+            #             bet = i[2]
+            #         bet_free_game.append(bet)
+            # except Exception as e:
+            #     print(e)
 
-            bet_sum = float(0.0)
-            for i in bet_list:
-                bet_sum = bet_sum + float(i)
+            # bet_sum = float(0.0)
+            # for i in bet_list:
+            #     bet_sum = bet_sum + float(i)
 
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines('\n\nTotal BETS ' + str(round(bet_sum, 2)) + "\n")
-            file1.close()
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # file1.writelines('\n\nTotal BETS ' + str(round(bet_sum, 2)) + "\n")
+            # file1.close()
 
             # Total Wins
-            total_wins = []
-            win_sum = float(0.0)
-            for i in data_tableId:
-                if i[3] == "-":
-                    print(type(i[3]))
-                    bet = 0.0
-                elif i[3] == "game":
-                    bet = i[4]
-                else:
-                    bet = i[3]
-                total_wins.append(bet)
-                win_sum = win_sum + float(bet)
+            # total_wins = []
+            # win_sum = float(0.0)
+            # for i in data_tableId:
+            #     if i[3] == "-":
+            #         print(type(i[3]))
+            #         bet = 0.0
+            #     elif i[3] == "game":
+            #         bet = i[4]
+            #     else:
+            #         bet = i[3]
+            #     total_wins.append(bet)
+            #     win_sum = win_sum + float(bet)
 
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines('Total WIN   ' + str(round(win_sum, 2)) + "\n")
-            file1.close()
-            results = float(win_sum) - float(bet_sum)
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("Total NETT GAMING(Win/Loss) " + str(round(results, 2)) + "\n")
-            file1.close()
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # file1.writelines('Total WIN   ' + str(round(win_sum, 2)) + "\n")
+            # file1.close()
+            # results = float(win_sum) - float(bet_sum)
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # file1.writelines("Total NETT GAMING(Win/Loss) " + str(round(results, 2)) + "\n")
+            # file1.close()
 
             # Total Free Games
-            word = '0.0'
-            length = len(bet_free_game)
-            print(bet_free_game)
-            count = 0
-            for i in range(0, length):
-                if word == bet_free_game[i]:
-                    count += 1
-            if count == 0:
-                file1 = open(GAME_TXT_FILE, "a+",
-                             encoding="utf-8")
-                file1.writelines("\n\nTotal FREE GAMES are 0\n")
-                file1.close()
-            else:
-                file1 = open(GAME_TXT_FILE, "a+",
-                             encoding="utf-8")
-                file1.writelines(
-                    "\n\nTotal FREE GAMES " + str(count) + "\n")
-                file1.close()
+            # word = '0.0'
+            # length = len(bet_free_game)
+            # print(bet_free_game)
+            # count = 0
+            # for i in range(0, length):
+            #     if word == bet_free_game[i]:
+            #         count += 1
+            # if count == 0:
+            #     file1 = open(GAME_TXT_FILE, "a+",
+            #                  encoding="utf-8")
+            #     file1.writelines("\n\nTotal FREE GAMES are 0\n")
+            #     file1.close()
+            # else:
+            #     file1 = open(GAME_TXT_FILE, "a+",
+            #                  encoding="utf-8")
+            #     file1.writelines(
+            #         "\n\nTotal FREE GAMES " + str(count) + "\n")
+            #     file1.close()
 
-            free_game_list = []
-            free_game_wins_sum = 0
-            for i in data_tableId:
-                # print(i[3])
-                if i[2] == "Free" and i[3] == 'game':
-                    free_game_list.append(i)
-                    free_game_wins_sum = free_game_wins_sum + float(i[4])
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("Free game winning is  " + str(round(free_game_wins_sum, 2)) + "\n")
-            file1.close()
+            # free_game_list = []
+            # free_game_wins_sum = 0
+            # for i in data_tableId:
+            #     # print(i[3])
+            #     if i[2] == "Free" and i[3] == 'game':
+            #         free_game_list.append(i)
+            #         free_game_wins_sum = free_game_wins_sum + float(i[4])
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # file1.writelines("Free game winning is  " + str(round(free_game_wins_sum, 2)) + "\n")
+            # file1.close()
 
-            file1 = open("free_game.txt", "a+", encoding="utf-8")
-            file1.writelines(" user name " + username_enter + "\n")
-            for x in free_game_list:
-                L = str(x).replace('[', '').replace(']', '')
-                file1.writelines(str(L) + "\n")
-            file1.close()
+            # file1 = open("free_game.txt", "a+", encoding="utf-8")
+            # file1.writelines(" user name " + username_enter + "\n")
+            # for x in free_game_list:
+            #     L = str(x).replace('[', '').replace(']', '')
+            #     file1.writelines(str(L) + "\n")
+            # file1.close()
 
             file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
             all_unique_game = ''
