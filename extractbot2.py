@@ -89,9 +89,34 @@ def other_wins_games(other_games: Dict):
     with open(GAME_TXT_FILE, "a+", encoding="utf-8") as game_txt_file:
         game_txt_file.writelines("\nOther Wins\n")
         for game_dict in other_games:
+            score = "+ " + other_games[game_dict]['score']
+            if other_games[game_dict]['score'][0] == '-':
+                score = other_games[game_dict]['score']
             game_txt_file.writelines(
-                f"{other_games[game_dict]['name']} + {other_games[game_dict]['score']} {other_games[game_dict]['other_game_date_time']}\n"
+                f"{other_games[game_dict]['name']} {score} {other_games[game_dict]['other_game_date_time']}\n"
             )
+
+
+def transfer_in_out(other_games: Dict):
+    with open(GAME_TXT_FILE, "a+", encoding="utf-8") as game_txt_file:
+        game_txt_file.writelines("\nTransfer in/out\n")
+        total_transfer_in = 0.0
+        total_transfer_out = 0.0
+
+        for game_dict in other_games:
+            if other_games[game_dict]["name"] != "Red Envelope":
+                score = float(other_games[game_dict]['score']) * -1
+                if score > 0:
+                    total_transfer_out += score
+                else:
+                    total_transfer_in += score
+                game_txt_file.writelines(
+                    f"{other_games[game_dict]['name']} {score} {other_games[game_dict]['other_game_date_time']}\n"
+                )
+
+        game_txt_file.writelines(f"Total Transfer in {total_transfer_in}\n")
+        game_txt_file.writelines(f"Total Transfer out {total_transfer_out}\n")
+
 
 
 def find_unique(list1):
@@ -134,45 +159,52 @@ def get_table_rows_data(total_table_pages):
             # adding every game into dictionary
             for row in rows:
                 new_row = row.split(' ')
-                if new_row[0].isalpha() or re.search(u'[\u4e00-\u9fff]', new_row[0]):
-                    if new_row[0] == "Red":
-                        game_score = new_row[1][-5:]
-                        other_games_make_dict_index = f"{new_row[0]}_{new_row[1][:-6]}_game_{len(other_games) + 1}"
+                if new_row[0]:
+                    if new_row[0][0].isalpha() or re.search(u'[\u4e00-\u9fff]', new_row[0]):
+                        if new_row[0] == "Red":
+                            game_score = new_row[1].split('：')
+                            other_games_make_dict_index = f"{new_row[0]}_{game_score[0]}_game_{len(other_games) + 1}"
+                            other_games[other_games_make_dict_index] = {
+                                "name": "Red Envelope",
+                                "score": game_score[1],
+                                "other_game_date_time": f"{new_row[-2]} {new_row[-1]}"
+                            }
+                        else:
+                            if game_name and game_name != new_row[0]:
+                                make_dict_index = f"{new_row[0]}_game_{len(games_data_dict) + 1}"
+                                games_data_dict[make_dict_index] = {
+                                    f"{new_row[0]}": [],
+                                    "game_started_at": f"{new_row[-2]} {new_row[-1]}",
+                                    "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
+                                }
+
+                            game_name = new_row[0]
+                            if not games_data_dict:
+                                games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = {
+                                    f"{game_name}": [new_row],
+                                    "game_started_at": f"{new_row[-2]} {new_row[-1]}",
+                                    "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
+                                }
+
+                            else:
+                                dict_index = f"{game_name}_game_{len(games_data_dict)}"
+                                games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][f"{game_name}"] + [
+                                    new_row]
+                                games_data_dict[dict_index]["game_started_at"] = f"{new_row[-2]} {new_row[-1]}"
+                    else:
+                        game_score = new_row[2].split('：')
+                        if len(game_score) != 2:
+                            game_score = new_row[1].split('：')
+                        other_games_make_dict_index = f"{new_row[1]}_{game_score[0]}_game_{len(other_games) + 1}"
                         other_games[other_games_make_dict_index] = {
-                            "name": "Red Envelope",
-                            "score": game_score,
+                            "name": f"{new_row[1]} {game_score[0]}",
+                            "score": game_score[1],
                             "other_game_date_time": f"{new_row[-2]} {new_row[-1]}"
                         }
-                    else:
-                        if game_name and game_name != new_row[0]:
-                            make_dict_index = f"{new_row[0]}_game_{len(games_data_dict) + 1}"
-                            games_data_dict[make_dict_index] = {
-                                f"{new_row[0]}": [],
-                                "game_started_at": f"{new_row[-2]} {new_row[-1]}",
-                                "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
-                            }
-
-                        game_name = new_row[0]
-                        if not games_data_dict:
-                            games_data_dict[f"{game_name}_game_{len(games_data_dict) + 1}"] = {
-                                f"{game_name}": [new_row],
-                                "game_started_at": f"{new_row[-2]} {new_row[-1]}",
-                                "game_ended_at": f"{new_row[-2]} {new_row[-1]}"
-                            }
-
-                        else:
-                            dict_index = f"{game_name}_game_{len(games_data_dict)}"
-                            games_data_dict[dict_index][f"{game_name}"] = games_data_dict[dict_index][f"{game_name}"] + [
-                                new_row]
-                            games_data_dict[dict_index]["game_started_at"] = f"{new_row[-2]} {new_row[-1]}"
                 else:
-                    game_score = new_row[2][-5:]
-                    other_games_make_dict_index = f"{new_row[1]}_{new_row[2][:-7]}_game_{len(other_games) + 1}"
-                    other_games[other_games_make_dict_index] = {
-                        "name": f"{new_row[1]} {new_row[2][:-6]}",
-                        "score": game_score,
-                        "other_game_date_time": f"{new_row[-2]} {new_row[-1]}"
-                    }
+                    print("=========================")
+                    print(new_row)
+                    print("=========================")
         try:
             print(f"Page Number========={n + 1}======================")
             next_page = WebDriverWait(browser, 2).until(
@@ -298,6 +330,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
 
             find_free_games(final_games_data_dict)
             other_wins_games(other_wins_games_data)
+            transfer_in_out(other_wins_games_data)
 
             # # how is calculating?
             # end_game_time = data_tableId[0][-2] + " " + data_tableId[0][-1]
@@ -399,71 +432,71 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             #     file1.writelines(str(L) + "\n")
             # file1.close()
 
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            all_unique_game = ''
-            for game in game_list:
-                all_unique_game += " " + game + " "
-            file1.writelines("\nGames Played are " + all_unique_game + " \n")
-            file1.close()
-
-            final_results = []
-            for i in data_tableId:
-                # print(i[0])
-                if i[0] in banned_games:
-                    # print(i[0])
-                    final_results.append(i)
-                else:
-                    print("No banned games found")
-            banned_game_list = []
-            for i in final_results:
-                banned_game_list.append(i[0])
-            banned_game = find_unique(banned_game_list)
-            if len(final_results) > 0:
-                for x in final_results:
-                    file1 = open("banned_game_list.txt", "a+", encoding="utf-8")
-                    L = str(x).replace('[', '').replace(']', '')
-                    file1.writelines("\n" + str(L) + "\n")
-                    file1.close()
-            if len(banned_game) == 0:
-                file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-                file1.writelines('No Banned games detected' + "\n")
-                file1.close()
-            elif len(banned_game) > 0:
-                file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-                for game in banned_game:
-                    file1.writelines('\nBanned games played ' + game + "\n")
-                file1.close()
-
-            data_from_tableID = []
-
-            # data_tableId
-            for i in data_tableId:
-                if i[1] != "0" or len(i) < 2:
-                    data_from_tableID.append(i)
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("\n\nImportant credit logs are \n")
-            for x in data_from_tableID:
-                file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-
-                L = str(x).replace('[', '').replace(']', '')
-                file1.writelines(str(L) + "\n")
-                file1.close()
-            total_transfer_in = 0
-            total_transfer_out = 0
-
-            for i in data_from_tableID:
-                if i[1] == "Set" and i[2][:5] == "score":
-                    if float(i[2][6:]) > 0.0:
-                        total_transfer_in = total_transfer_in + \
-                                            float(i[2][6:])
-                    elif float(i[2][6:]) < 0.0:
-                        total_transfer_out = total_transfer_out + \
-                                             float(i[2][6:])
-
-            file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
-            file1.writelines("\nTotal Transfer in " + str(total_transfer_in) + "\n")
-            file1.writelines("Total Transfer out " + str(total_transfer_out) + "\n\n")
-            file1.close()
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # all_unique_game = ''
+            # for game in game_list:
+            #     all_unique_game += " " + game + " "
+            # file1.writelines("\nGames Played are " + all_unique_game + " \n")
+            # file1.close()
+            #
+            # final_results = []
+            # for i in data_tableId:
+            #     # print(i[0])
+            #     if i[0] in banned_games:
+            #         # print(i[0])
+            #         final_results.append(i)
+            #     else:
+            #         print("No banned games found")
+            # banned_game_list = []
+            # for i in final_results:
+            #     banned_game_list.append(i[0])
+            # banned_game = find_unique(banned_game_list)
+            # if len(final_results) > 0:
+            #     for x in final_results:
+            #         file1 = open("banned_game_list.txt", "a+", encoding="utf-8")
+            #         L = str(x).replace('[', '').replace(']', '')
+            #         file1.writelines("\n" + str(L) + "\n")
+            #         file1.close()
+            # if len(banned_game) == 0:
+            #     file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            #     file1.writelines('No Banned games detected' + "\n")
+            #     file1.close()
+            # elif len(banned_game) > 0:
+            #     file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            #     for game in banned_game:
+            #         file1.writelines('\nBanned games played ' + game + "\n")
+            #     file1.close()
+            #
+            # data_from_tableID = []
+            #
+            # # data_tableId
+            # for i in data_tableId:
+            #     if i[1] != "0" or len(i) < 2:
+            #         data_from_tableID.append(i)
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # file1.writelines("\n\nImportant credit logs are \n")
+            # for x in data_from_tableID:
+            #     file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            #
+            #     L = str(x).replace('[', '').replace(']', '')
+            #     file1.writelines(str(L) + "\n")
+            #     file1.close()
+            # total_transfer_in = 0
+            # total_transfer_out = 0
+            #
+            # for i in data_from_tableID:
+            #     if i[1] == "Set" and i[2][:5] == "score":
+            #         if float(i[2][6:]) > 0.0:
+            #             total_transfer_in = total_transfer_in + \
+            #                                 float(i[2][6:])
+            #         elif float(i[2][6:]) < 0.0:
+            #             total_transfer_out = total_transfer_out + \
+            #                                  float(i[2][6:])
+            #
+            # file1 = open(GAME_TXT_FILE, "a+", encoding="utf-8")
+            # file1.writelines("\nTotal Transfer in " + str(total_transfer_in) + "\n")
+            # file1.writelines("Total Transfer out " + str(total_transfer_out) + "\n\n")
+            # file1.close()
 
             file1.close()
             browser.quit()
