@@ -272,10 +272,17 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
             time.sleep(5 + time_by_user)
             browser.switch_to.frame(browser.find_element(By.TAG_NAME, "iframe"))
 
+            total_pages = None
             try:
                 total_pages = browser.find_element(By.CLASS_NAME, 'laypage_last').text
             except:
-                pass
+                total_pages = browser.find_element(By.CLASS_NAME, 'laypage_last').text
+                
+            if total_pages is None:
+                browser.quit()
+                print("total pages not found")
+                exit()
+
             final_data, final_games_data_dict, other_wins_games_data = get_table_rows_data(total_pages)
 
             browser.switch_to.default_content()
