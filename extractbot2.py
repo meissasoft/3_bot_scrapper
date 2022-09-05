@@ -121,7 +121,6 @@ def transfer_in_out(other_games: Dict):
 
 
 def get_table_rows_data(total_table_pages):
-    table_rows_data = []
     games_data_dict = {}
     other_games = {}
     game_name = None
@@ -143,8 +142,6 @@ def get_table_rows_data(total_table_pages):
                 .replace('Football Fans', 'FootballFans') \
                 .replace('Tally Ho', 'TallyHo') \
                 .replace('Hologram Wilds', 'HologramWilds').split("\n")
-
-            table_rows_data.append(rows)
 
             # adding every game into dictionary
             for row in rows:
@@ -205,7 +202,7 @@ def get_table_rows_data(total_table_pages):
             print(f"Exception: {str(ex)}")
             break
 
-    return table_rows_data, games_data_dict, other_games
+    return games_data_dict, other_games
 
 
 if URL_enter != "" and login_username_enter != '' and password_enter != "":
@@ -215,7 +212,8 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
     password = sleep_and_find(browser, 'password', By.ID)
     username.send_keys(login_username_enter)
     password.send_keys(password_enter)
-    if login := sleep_and_find(browser, 'J_btnSubmit', By.ID):
+    login = sleep_and_find(browser, 'J_btnSubmit', By.ID)
+    if login:
         login.click()
 
         search_user = sleep_and_find(browser, '#txt_UserName', By.CSS_SELECTOR)
@@ -226,7 +224,8 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
         sleep_and_find(browser, '#Button_OK', By.CSS_SELECTOR).click()
         time.sleep(2)
 
-        if game_log := sleep_and_find(browser, '/html/body/div/aside/section/ul/li[7]/a', By.XPATH):
+        game_log = sleep_and_find(browser, '/html/body/div/aside/section/ul/li[7]/a', By.XPATH)
+        if game_log:
             game_log.click()
 
             user_details = open(USER_DETAILS_FILE)
@@ -284,7 +283,7 @@ if URL_enter != "" and login_username_enter != '' and password_enter != "":
                 print("total pages not found")
                 exit()
 
-            final_data, final_games_data_dict, other_wins_games_data = get_table_rows_data(total_pages)
+            final_games_data_dict, other_wins_games_data = get_table_rows_data(total_pages)
 
             browser.switch_to.default_content()
 
