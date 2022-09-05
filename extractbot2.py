@@ -90,12 +90,13 @@ def other_wins_games(other_games: Dict):
     with open(GAME_TXT_FILE, "a+", encoding="utf-8") as game_txt_file:
         game_txt_file.writelines("\nOther Wins\n")
         for game_dict in other_games:
-            score = "+ " + other_games[game_dict]['score']
-            if other_games[game_dict]['score'][0] == '-':
-                score = other_games[game_dict]['score']
-            game_txt_file.writelines(
-                f"{other_games[game_dict]['name']} {score} {other_games[game_dict]['other_game_date_time']}\n"
-            )
+            if other_games[game_dict]['name'] != "Set score":
+                score = "+ " + other_games[game_dict]['score']
+                if other_games[game_dict]['score'][0] == '-':
+                    score = other_games[game_dict]['score']
+                game_txt_file.writelines(
+                    f"{other_games[game_dict]['name']} {score} {other_games[game_dict]['other_game_date_time']}\n"
+                )
 
 
 def transfer_in_out(other_games: Dict):
